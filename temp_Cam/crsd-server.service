@@ -1,0 +1,45 @@
+[Unit]
+Description=CRSD Home Automation Server
+Documentation=https://github.com/crsd/server
+After=network.target mosquitto.service
+Wants=mosquitto.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=crsd
+Group=crsd
+WorkingDirectory=/opt/crsd
+Environment=PATH=/opt/crsd/venv/bin
+Environment=PYTHONPATH=/opt/crsd
+Environment=FLASK_ENV=production
+ExecStart=/opt/crsd/venv/bin/python stream_server.py
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+TimeoutStartSec=30
+TimeoutStopSec=30
+
+# Sécurité
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/crsd
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+# Limites de ressources
+LimitNOFILE=65536
+MemoryMax=512M
+CPUQuota=50%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=crsd-server
+
+[Install]
+WantedBy=multi-user.target

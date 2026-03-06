@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRSD - Gestion Gâches</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      fontFamily: { display: ["Inter", "sans-serif"] },
+      colors: {
+        primary: "#f20d0d",
+        "background-light": "#f8f5f5",
+        "background-dark": "#1A1A1A",
+        "surface-dark": "#242424",
+        "border-dark": "#333333",
+      }
+    }
+  }
+}
+</script>
+
+<style>
+body { font-family: 'Inter', sans-serif; }
+
+@keyframes pulse-green {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-online { animation: pulse-green 2s infinite; }
+
+.gache-card {
+  transition: all 0.3s ease;
+}
+.gache-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+</style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
+
+<div class="md:flex">
+
+<!-- ================= SIDEBAR (DESKTOP ONLY) ================= -->
+<aside class="hidden md:flex flex-col w-64 min-h-screen bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-border-dark p-6">
+  <div class="flex justify-between items-center mb-10">
+    <h2 class="text-xl font-bold">CRSD</h2>
+    <button onclick="toggleDark()" class="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700">
+      <span class="material-symbols-outlined">dark_mode</span>
+    </button>
+  </div>
+
+  <nav class="flex flex-col gap-6 text-sm">
+    <a href="/" class="flex items-center gap-3 text-slate-500 hover:text-primary">
+      <span class="material-symbols-outlined">dashboard</span> Dashboard
+    </a>
+    <a href="/cam.html" class="flex items-center gap-3 text-slate-500 hover:text-primary">
+      <span class="material-symbols-outlined">videocam</span> Vidéosurveillance
+    </a>
+    <a href="/gache.html" class="flex items-center gap-3 text-primary font-semibold">
+      <span class="material-symbols-outlined">lock</span> Gâches Électriques
+    </a>
+    <a class="flex items-center gap-3 text-slate-500 hover:text-primary">
+      <span class="material-symbols-outlined">notifications</span> Alertes
+    </a>
+    <a class="flex items-center gap-3 text-slate-500 hover:text-primary">
+      <span class="material-symbols-outlined">person</span> Profil
+    </a>
+  </nav>
+</aside>
+
+<!-- ================= MAIN ================= -->
+<div class="flex-1 flex flex-col min-h-screen">
+
+<!-- HEADER -->
+<header class="sticky top-0 z-20 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-border-dark px-4 pt-6 pb-4 flex justify-between items-center">
+  <h1 class="text-lg font-bold">Gestion des Gâches</h1>
+  <button onclick="toggleDark()" class="md:hidden p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700">
+    <span class="material-symbols-outlined">dark_mode</span>
+  </button>
+</header>
+
+<!-- STATS BAR -->
+<div class="px-4 md:px-8 py-4">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-white dark:bg-surface-dark rounded-lg p-4 border border-slate-200 dark:border-border-dark">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+          <span class="material-symbols-outlined text-green-600">lock_open</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold" id="total-gaches">0</p>
+          <p class="text-xs text-slate-500">Gâches Total</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white dark:bg-surface-dark rounded-lg p-4 border border-slate-200 dark:border-border-dark">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+          <span class="material-symbols-outlined text-blue-600">wifi</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold" id="online-gaches">0</p>
+          <p class="text-xs text-slate-500">En Ligne</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white dark:bg-surface-dark rounded-lg p-4 border border-slate-200 dark:border-border-dark">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+          <span class="material-symbols-outlined text-yellow-600">lock</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold" id="closed-gaches">0</p>
+          <p class="text-xs text-slate-500">Fermées</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white dark:bg-surface-dark rounded-lg p-4 border border-slate-200 dark:border-border-dark">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+          <span class="material-symbols-outlined text-red-600">warning</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold" id="offline-gaches">0</p>
+          <p class="text-xs text-slate-500">Hors Ligne</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GACHES GRID -->
+<main class="flex-1 p-4 md:p-8 pb-24 md:pb-8">
+  <div class="w-full max-w-[1800px] mx-auto">
+    
+    <!-- Actions Bar -->
+    <div class="flex justify-between items-center mb-6">
+      <div class="flex gap-2">
+        <button onclick="refreshGaches()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">refresh</span>
+          Actualiser
+        </button>
+        <button onclick="openAllGaches()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">lock_open</span>
+          Ouvrir Toutes
+        </button>
+      </div>
+      
+      <div class="flex gap-2">
+        <button class="px-4 py-2 bg-slate-200 dark:bg-surface-dark rounded-lg hover:bg-slate-300 dark:hover:bg-zinc-700 transition-colors">
+          <span class="material-symbols-outlined text-sm">filter_list</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Gaches Grid -->
+    <div id="gaches-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <!-- Les gâches seront ajoutées dynamiquement ici -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-12">
+      <div class="w-24 h-24 bg-slate-100 dark:bg-surface-dark rounded-full flex items-center justify-center mx-auto mb-4">
+        <span class="material-symbols-outlined text-4xl text-slate-400">lock</span>
+      </div>
+      <h3 class="text-lg font-semibold mb-2">Aucune gâche détectée</h3>
+      <p class="text-slate-500 mb-4">Vérifiez que vos gâches sont branchées et configurées</p>
+      <button onclick="refreshGaches()" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-red-600 transition-colors">
+        Rechercher des gâches
+      </button>
+    </div>
+
+  </div>
+</main>
+
+</div>
+</div>
+
+<!-- MOBILE NAVBAR -->
+<footer class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-border-dark px-2 py-3">
+  <div class="flex justify-around text-xs">
+    <a href="/" class="flex flex-col items-center text-slate-400">
+      <span class="material-symbols-outlined">dashboard</span>
+      Dashboard
+    </a>
+    <a href="/cam.html" class="flex flex-col items-center text-slate-400">
+      <span class="material-symbols-outlined">videocam</span>
+      Caméras
+    </a>
+    <a href="/gache.html" class="flex flex-col items-center text-primary font-semibold">
+      <span class="material-symbols-outlined">lock</span>
+      Gâches
+    </a>
+    <a class="flex flex-col items-center text-slate-400">
+      <span class="material-symbols-outlined">notifications</span>
+      Alertes
+    </a>
+    <a class="flex flex-col items-center text-slate-400">
+      <span class="material-symbols-outlined">person</span>
+      Profil
+    </a>
+  </div>
+</footer>
+
+<!-- Gache Control Modal -->
+<div id="gache-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onclick="closeGacheModal(event)">
+  <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-96 bg-white dark:bg-surface-dark rounded-xl shadow-2xl" onclick="event.stopPropagation()">
+    
+    <!-- Header -->
+    <div class="p-6 border-b border-slate-200 dark:border-border-dark">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-lg" id="modal-gache-name">Gâche Principale</h3>
+        <button onclick="closeGacheModal()" class="p-1 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500 mt-1" id="modal-gache-id">gache_abc123</p>
+    </div>
+
+    <!-- Status -->
+    <div class="p-6 border-b border-slate-200 dark:border-border-dark">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div id="modal-status-icon" class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+            <span class="material-symbols-outlined text-green-600">lock</span>
+          </div>
+          <div>
+            <p class="font-semibold" id="modal-status-text">Fermée</p>
+            <p class="text-xs text-slate-500" id="modal-last-update">Dernière mise à jour: --:--:--</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 bg-green-500 rounded-full animate-online"></span>
+          <span class="text-xs text-green-600">En ligne</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="p-6">
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <button onclick="controlGache('OPEN')" class="p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex flex-col items-center gap-2">
+          <span class="material-symbols-outlined">lock_open</span>
+          <span class="text-sm font-medium">Ouvrir</span>
+        </button>
+        <button onclick="controlGache('CLOSE')" class="p-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex flex-col items-center gap-2">
+          <span class="material-symbols-outlined">lock</span>
+          <span class="text-sm font-medium">Fermer</span>
+        </button>
+      </div>
+      
+      <button onclick="controlGache('TOGGLE')" class="w-full p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined">sync</span>
+        <span class="font-medium">Basculer</span>
+      </button>
+      
+      <div class="mt-4 p-3 bg-slate-100 dark:bg-zinc-800 rounded-lg">
+        <p class="text-xs text-slate-600 dark:text-slate-400">
+          <span class="material-symbols-outlined text-sm">info</span>
+          La gâche se ferme automatiquement après 3 secondes pour des raisons de sécurité.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const MQTT_WS_URL = 'ws://192.168.100.55:9001'; // WebSocket MQTT
+const API_URL = 'http://192.168.100.55:5001';
+let mqttClient = null;
+let gaches = new Map();
+let currentGacheId = null;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  initMQTT();
+  loadGaches();
+  setInterval(updateStats, 5000);
+});
+
+// Toggle dark mode
+function toggleDark() {
+  document.documentElement.classList.toggle("dark");
+}
+
+// Initialize MQTT WebSocket connection
+function initMQTT() {
+  try {
+    mqttClient = new WebSocket(MQTT_WS_URL);
+    
+    mqttClient.onopen = () => {
+      console.log('MQTT WebSocket connecté');
+      // S'abonner aux topics des gâches
+      subscribeToGaches();
+    };
+    
+    mqttClient.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        handleMQTTMessage(message);
+      } catch (e) {
+        console.error('Erreur parsing MQTT:', e);
+      }
+    };
+    
+    mqttClient.onclose = () => {
+      console.log('MQTT WebSocket fermé - Reconnexion dans 5s');
+      setTimeout(initMQTT, 5000);
+    };
+    
+    mqttClient.onerror = (error) => {
+      console.error('Erreur MQTT WebSocket:', error);
+    };
+  } catch (e) {
+    console.error('Erreur connexion MQTT:', e);
+    setTimeout(initMQTT, 5000);
+  }
+}
+
+// Load gaches from server
+async function loadGaches() {
+  try {
+    const response = await fetch(`${API_URL}/gaches`);
+    const data = await response.json();
+    
+    if (data.gaches && data.gaches.length > 0) {
+      data.gaches.forEach(gache => {
+        gaches.set(gache.id, {
+          ...gache,
+          lastSeen: Date.now(),
+          online: true
+        });
+      });
+      renderGaches();
+    } else {
+      showEmptyState();
+    }
+  } catch (error) {
+    console.error('Erreur chargement gâches:', error);
+    showEmptyState();
+  }
+}
+
+// Subscribe to MQTT topics for all gaches
+function subscribeToGaches() {
+  if (!mqttClient || mqttClient.readyState !== WebSocket.OPEN) return;
+  
+  // S'abonner au topic général des gâches
+  const subscribeMsg = {
+    type: 'subscribe',
+    topic: 'crsd/+/state'
+  };
+  mqttClient.send(JSON.stringify(subscribeMsg));
+}
+
+// Handle MQTT messages
+function handleMQTTMessage(message) {
+  if (message.topic && message.topic.includes('/state')) {
+    const deviceId = message.topic.split('/')[1];
+    
+    try {
+      const state = JSON.parse(message.payload);
+      updateGacheState(deviceId, state);
+    } catch (e) {
+      console.error('Erreur parsing état gâche:', e);
+    }
+  }
+}
+
+// Update gache state
+function updateGacheState(deviceId, state) {
+  if (gaches.has(deviceId)) {
+    const gache = gaches.get(deviceId);
+    gache.state = state.state;
+    gache.lastUpdate = new Date(state.timestamp);
+    gache.lastSeen = Date.now();
+    gache.online = true;
+    
+    gaches.set(deviceId, gache);
+    renderGaches();
+    
+    // Update modal if open
+    if (currentGacheId === deviceId) {
+      updateModalState(gache);
+    }
+  } else {
+    // Nouvelle gâche découverte
+    gaches.set(deviceId, {
+      id: deviceId,
+      name: `Gâche ${deviceId.slice(-4)}`,
+      location: 'Non défini',
+      state: state.state,
+      lastUpdate: new Date(state.timestamp),
+      lastSeen: Date.now(),
+      online: true
+    });
+    renderGaches();
+  }
+}
+
+// Render gaches grid
+function renderGaches() {
+  const grid = document.getElementById('gaches-grid');
+  const emptyState = document.getElementById('empty-state');
+  
+  if (gaches.size === 0) {
+    showEmptyState();
+    return;
+  }
+  
+  emptyState.classList.add('hidden');
+  grid.innerHTML = '';
+  
+  gaches.forEach((gache, id) => {
+    const isOnline = (Date.now() - gache.lastSeen) < 60000; // 1 minute
+    const isOpen = gache.state === 'open';
+    
+    const card = document.createElement('div');
+    card.className = 'gache-card bg-white dark:bg-surface-dark rounded-xl p-6 border border-slate-200 dark:border-border-dark cursor-pointer';
+    card.onclick = () => openGacheModal(id);
+    
+    card.innerHTML = `
+      <div class="flex justify-between items-start mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 ${isOpen ? 'bg-green-100 dark:bg-green-900/30' : 'bg-yellow-100 dark:bg-yellow-900/30'} rounded-lg flex items-center justify-center">
+            <span class="material-symbols-outlined ${isOpen ? 'text-green-600' : 'text-yellow-600'}">${isOpen ? 'lock_open' : 'lock'}</span>
+          </div>
+          <div>
+            <h3 class="font-semibold">${gache.name}</h3>
+            <p class="text-xs text-slate-500">${gache.location}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 ${isOnline ? 'bg-green-500 animate-online' : 'bg-red-500'} rounded-full"></span>
+          <span class="text-xs ${isOnline ? 'text-green-600' : 'text-red-600'}">${isOnline ? 'En ligne' : 'Hors ligne'}</span>
+        </div>
+      </div>
+      
+      <div class="space-y-2">
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-500">État:</span>
+          <span class="font-medium ${isOpen ? 'text-green-600' : 'text-yellow-600'}">${isOpen ? 'Ouverte' : 'Fermée'}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-500">Dernière activité:</span>
+          <span class="text-slate-700 dark:text-slate-300">${gache.lastUpdate ? formatTime(gache.lastUpdate) : '--:--'}</span>
+        </div>
+      </div>
+      
+      <div class="mt-4 pt-4 border-t border-slate-200 dark:border-border-dark">
+        <div class="flex gap-2">
+          <button onclick="event.stopPropagation(); quickControl('${id}', 'OPEN')" class="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
+            Ouvrir
+          </button>
+          <button onclick="event.stopPropagation(); quickControl('${id}', 'CLOSE')" class="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm">
+            Fermer
+          </button>
+        </div>
+      </div>
+    `;
+    
+    grid.appendChild(card);
+  });
+  
+  updateStats();
+}
+
+// Show empty state
+function showEmptyState() {
+  document.getElementById('gaches-grid').innerHTML = '';
+  document.getElementById('empty-state').classList.remove('hidden');
+}
+
+// Update statistics
+function updateStats() {
+  const total = gaches.size;
+  let online = 0;
+  let closed = 0;
+  let offline = 0;
+  
+  gaches.forEach(gache => {
+    const isOnline = (Date.now() - gache.lastSeen) < 60000;
+    if (isOnline) {
+      online++;
+      if (gache.state === 'closed') closed++;
+    } else {
+      offline++;
+    }
+  });
+  
+  document.getElementById('total-gaches').textContent = total;
+  document.getElementById('online-gaches').textContent = online;
+  document.getElementById('closed-gaches').textContent = closed;
+  document.getElementById('offline-gaches').textContent = offline;
+}
+
+// Open gache modal
+function openGacheModal(gacheId) {
+  currentGacheId = gacheId;
+  const gache = gaches.get(gacheId);
+  
+  document.getElementById('modal-gache-name').textContent = gache.name;
+  document.getElementById('modal-gache-id').textContent = gache.id;
+  
+  updateModalState(gache);
+  document.getElementById('gache-modal').classList.remove('hidden');
+}
+
+// Update modal state
+function updateModalState(gache) {
+  const isOpen = gache.state === 'open';
+  const isOnline = (Date.now() - gache.lastSeen) < 60000;
+  
+  const statusIcon = document.getElementById('modal-status-icon');
+  const statusText = document.getElementById('modal-status-text');
+  const lastUpdate = document.getElementById('modal-last-update');
+  
+  statusIcon.className = `w-12 h-12 ${isOpen ? 'bg-green-100 dark:bg-green-900/30' : 'bg-yellow-100 dark:bg-yellow-900/30'} rounded-lg flex items-center justify-center`;
+  statusIcon.innerHTML = `<span class="material-symbols-outlined ${isOpen ? 'text-green-600' : 'text-yellow-600'}">${isOpen ? 'lock_open' : 'lock'}</span>`;
+  
+  statusText.textContent = isOpen ? 'Ouverte' : 'Fermée';
+  lastUpdate.textContent = `Dernière mise à jour: ${gache.lastUpdate ? formatTime(gache.lastUpdate) : '--:--:--'}`;
+}
+
+// Close gache modal
+function closeGacheModal(event) {
+  if (!event || event.target.id === 'gache-modal') {
+    document.getElementById('gache-modal').classList.add('hidden');
+    currentGacheId = null;
+  }
+}
+
+// Control gache
+function controlGache(command) {
+  if (!currentGacheId) return;
+  
+  sendMQTTCommand(currentGacheId, command);
+}
+
+// Quick control from card
+function quickControl(gacheId, command) {
+  sendMQTTCommand(gacheId, command);
+}
+
+// Send MQTT command
+function sendMQTTCommand(gacheId, command) {
+  if (!mqttClient || mqttClient.readyState !== WebSocket.OPEN) {
+    console.error('MQTT non connecté');
+    return;
+  }
+  
+  const topic = `crsd/${gacheId}/command`;
+  const message = {
+    type: 'publish',
+    topic: topic,
+    payload: command
+  };
+  
+  mqttClient.send(JSON.stringify(message));
+  console.log(`Commande envoyée: ${topic} = ${command}`);
+}
+
+// Refresh gaches
+function refreshGaches() {
+  gaches.clear();
+  loadGaches();
+}
+
+// Open all gaches
+function openAllGaches() {
+  if (confirm('Êtes-vous sûr de vouloir ouvrir toutes les gâches ?')) {
+    gaches.forEach((gache, id) => {
+      if ((Date.now() - gache.lastSeen) < 60000) { // Only online gaches
+        sendMQTTCommand(id, 'OPEN');
+      }
+    });
+  }
+}
+
+// Format time
+function formatTime(date) {
+  return date.toLocaleTimeString('fr-FR', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    second: '2-digit' 
+  });
+}
+</script>
+
+</body>
+</html>

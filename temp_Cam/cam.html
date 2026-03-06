@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRSD - Vidéosurveillance</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      fontFamily: { display: ["Inter", "sans-serif"] },
+      colors: {
+        primary: "#f20d0d",
+        "background-light": "#f8f5f5",
+        "background-dark": "#1A1A1A",
+        "surface-dark": "#242424",
+        "border-dark": "#333333",
+      }
+    }
+  }
+}
+</script>
+
+<style>
+body { font-family: 'Inter', sans-serif; }
+
+@keyframes pulse-red {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-live { animation: pulse-red 2s infinite; }
+</style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
+
+<div class="md:flex">
+
+<!-- ================= SIDEBAR (DESKTOP ONLY) ================= -->
+<aside class="hidden md:flex flex-col w-64 min-h-screen bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-border-dark p-6">
+  <div class="flex justify-between items-center mb-10">
+    <h2 class="text-xl font-bold">CRSD</h2>
+    <button onclick="toggleDark()" class="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700">
+      <span class="material-symbols-outlined">dark_mode</span>
+    </button>
+  </div>
+
+  <nav class="flex flex-col gap-6 text-sm">
+    <a href="/" class="flex items-center gap-3 text-slate-500 hover:text-primary">
+      <span class="material-symbols-outlined">dashboard</span> Dashboard
+    </a>
+    <a href="/cam.html" class="flex items-center gap-3 text-primary font-semibold">
+      <span class="material-symbols-outlined">videocam</span> Vidéosurveillance
+    </a>
+    <a href="/gache.html" class="flex items-center gap-3 text-slate-500 hover:text-primary">
+      <span class="material-symbols-outlined">lock</span> Gâches Électriques
+    </a>
+    <a class="flex items-center gap-3 text-slate-500 hover:text-primary">
+      <span class="material-symbols-outlined">notifications</span> Alertes
+    </a>
+    <a class="flex items-center gap-3 text-slate-500 hover:text-primary">
+      <span class="material-symbols-outlined">person</span> Profil
+    </a>
+  </nav>
+</aside>
+
+<!-- ================= MAIN ================= -->
+<div class="flex-1 flex flex-col min-h-screen">
+
+<!-- HEADER (mobile comme avant) -->
+<header class="sticky top-0 z-20 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-border-dark px-4 pt-6 pb-4 flex justify-between items-center">
+
+  <h1 class="text-lg font-bold">Vidéosurveillance</h1>
+
+  <button onclick="toggleDark()" class="md:hidden p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700">
+    <span class="material-symbols-outlined">dark_mode</span>
+  </button>
+
+</header>
+
+<!-- FILTERS -->
+<nav class="mt-4 px-4 md:px-8">
+  <div class="flex gap-2 overflow-x-auto pb-2">
+    <button class="whitespace-nowrap px-5 py-2 rounded-full bg-primary text-white text-sm font-semibold">
+      Tout
+    </button>
+    <button class="whitespace-nowrap px-5 py-2 rounded-full bg-slate-200 dark:bg-surface-dark text-sm">
+      Parking
+    </button>
+    <button class="whitespace-nowrap px-5 py-2 rounded-full bg-slate-200 dark:bg-surface-dark text-sm">
+      Lobby
+    </button>
+    <button class="whitespace-nowrap px-5 py-2 rounded-full bg-slate-200 dark:bg-surface-dark text-sm">
+      Étage 1
+    </button>
+  </div>
+</nav>
+
+<!-- CAMERA GRID -->
+<main class="flex-1 p-2 md:p-6 pb-24 md:pb-8">
+
+  <div class="w-full max-w-[1800px] mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
+
+      <!-- CAMERA -->
+      <div class="relative w-full aspect-video rounded-lg md:rounded-xl overflow-hidden shadow-xl group">
+        <!-- Stream Video -->
+        <img id="stream" class="absolute inset-0 w-full h-full object-cover" src="" alt="Camera Stream">
+
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+
+        <!-- LIVE Badge -->
+        <div class="absolute top-3 left-3 flex items-center gap-2 bg-black/40 px-3 py-1 rounded-md text-xs text-white">
+          <span class="w-2 h-2 bg-primary rounded-full animate-live"></span>
+          LIVE
+        </div>
+
+        <!-- Settings Button (3 dots) -->
+        <button onclick="toggleSettings('cam-01')" class="absolute top-2 right-2 md:top-3 md:right-3 p-1.5 md:p-2 bg-black/40 hover:bg-black/60 rounded-md text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+          <span class="material-symbols-outlined text-base md:text-lg">more_vert</span>
+        </button>
+
+        <!-- Camera Info -->
+        <div class="absolute bottom-2 left-2 right-2 md:bottom-3 md:left-3 md:right-3 text-white">
+          <p class="text-xs md:text-sm font-semibold">Parking Entrée</p>
+          <p class="text-[10px] md:text-xs text-slate-300">CAM-01 • <span id="time-cam-01">--:--:--</span></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+</div>
+</div>
+
+<!-- MOBILE NAVBAR (non cassée) -->
+<footer class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-border-dark px-2 py-3">
+
+  <div class="flex justify-around text-xs">
+    <a href="/" class="flex flex-col items-center text-slate-400">
+      <span class="material-symbols-outlined">dashboard</span>
+      Dashboard
+    </a>
+
+    <a href="/cam.html" class="flex flex-col items-center text-primary font-semibold">
+      <span class="material-symbols-outlined">videocam</span>
+      Caméras
+    </a>
+
+    <a href="/gache.html" class="flex flex-col items-center text-slate-400">
+      <span class="material-symbols-outlined">lock</span>
+      Gâches
+    </a>
+
+    <a class="flex flex-col items-center text-slate-400">
+      <span class="material-symbols-outlined">notifications</span>
+      Alertes
+    </a>
+
+    <a class="flex flex-col items-center text-slate-400">
+      <span class="material-symbols-outlined">person</span>
+      Profil
+    </a>
+  </div>
+
+</footer>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onclick="closeSettings(event)">
+  <div class="absolute right-4 top-20 w-80 max-h-[80vh] overflow-y-auto bg-white dark:bg-surface-dark rounded-xl shadow-2xl" onclick="event.stopPropagation()">
+    
+    <!-- Header -->
+    <div class="sticky top-0 bg-white dark:bg-surface-dark border-b border-slate-200 dark:border-border-dark p-4">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-lg">Paramètres Caméra</h3>
+        <button onclick="closeSettings()" class="p-1 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500 mt-1" id="modal-cam-name">CAM-01</p>
+    </div>
+
+    <!-- Settings Content -->
+    <div class="p-4 space-y-4">
+      
+      <!-- Resolution -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Résolution</label>
+        <select id="framesize" class="w-full p-2 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700">
+          <option value="10">UXGA (1600x1200)</option>
+          <option value="9">SXGA (1280x1024)</option>
+          <option value="8">XGA (1024x768)</option>
+          <option value="7">SVGA (800x600)</option>
+          <option value="5" selected>CIF (400x296)</option>
+          <option value="5">CIF (400x296)</option>
+        </select>
+      </div>
+
+      <!-- Quality -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Qualité JPEG</label>
+        <input type="range" id="quality" min="10" max="63" value="10" class="w-full">
+        <div class="flex justify-between text-xs text-slate-500">
+          <span>Haute</span>
+          <span>Basse</span>
+        </div>
+      </div>
+
+      <!-- Brightness -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Luminosité</label>
+        <input type="range" id="brightness" min="-2" max="2" value="0" class="w-full">
+      </div>
+
+      <!-- Contrast -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Contraste</label>
+        <input type="range" id="contrast" min="-2" max="2" value="0" class="w-full">
+      </div>
+
+      <!-- Saturation -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Saturation</label>
+        <input type="range" id="saturation" min="-2" max="2" value="0" class="w-full">
+      </div>
+
+      <!-- Sharpness -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Netteté</label>
+        <input type="range" id="sharpness" min="-2" max="2" value="0" class="w-full">
+      </div>
+
+      <!-- Denoise -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Réduction bruit</label>
+        <input type="range" id="denoise" min="0" max="8" value="0" class="w-full">
+      </div>
+
+      <!-- AE Level -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Niveau d'exposition</label>
+        <input type="range" id="ae_level" min="-2" max="2" value="0" class="w-full">
+      </div>
+
+      <!-- AEC Value -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Valeur d'exposition</label>
+        <input type="range" id="aec_value" min="0" max="1200" value="204" class="w-full">
+      </div>
+
+      <!-- AGC Gain -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Gain AGC</label>
+        <input type="range" id="agc_gain" min="0" max="30" value="0" class="w-full">
+      </div>
+
+      <!-- Gain Ceiling -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Plafond de gain</label>
+        <select id="gainceiling" class="w-full p-2 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700">
+          <option value="0">2x</option>
+          <option value="1">4x</option>
+          <option value="2">8x</option>
+          <option value="3">16x</option>
+          <option value="4">32x</option>
+          <option value="5">64x</option>
+          <option value="6" selected>128x</option>
+        </select>
+      </div>
+
+      <!-- WB Mode -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Mode balance blancs</label>
+        <select id="wb_mode" class="w-full p-2 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700">
+          <option value="0" selected>Auto</option>
+          <option value="1">Ensoleillé</option>
+          <option value="2">Nuageux</option>
+          <option value="3">Bureau</option>
+          <option value="4">Maison</option>
+        </select>
+      </div>
+
+      <!-- Special Effects -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Effet Spécial</label>
+        <select id="special_effect" class="w-full p-2 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700">
+          <option value="0" selected>Aucun</option>
+          <option value="1">Négatif</option>
+          <option value="2">Noir & Blanc</option>
+          <option value="3">Rougeâtre</option>
+          <option value="4">Verdâtre</option>
+          <option value="5">Bleuté</option>
+          <option value="6">Sépia</option>
+        </select>
+      </div>
+
+      <!-- White Balance -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="awb" checked class="rounded">
+          <span class="text-sm">Balance des blancs auto</span>
+        </label>
+      </div>
+
+      <!-- Auto Gain -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="agc" checked class="rounded">
+          <span class="text-sm">Gain automatique</span>
+        </label>
+      </div>
+
+      <!-- Auto Exposure -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="aec" checked class="rounded">
+          <span class="text-sm">Exposition automatique</span>
+        </label>
+      </div>
+
+      <!-- AEC2 -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="aec2" checked class="rounded">
+          <span class="text-sm">AEC DSP</span>
+        </label>
+      </div>
+
+      <!-- AWB Gain -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="awb_gain" checked class="rounded">
+          <span class="text-sm">Gain AWB</span>
+        </label>
+      </div>
+
+      <!-- BPC -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="bpc" class="rounded">
+          <span class="text-sm">Correction pixels noirs</span>
+        </label>
+      </div>
+
+      <!-- WPC -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="wpc" checked class="rounded">
+          <span class="text-sm">Correction pixels blancs</span>
+        </label>
+      </div>
+
+      <!-- Raw GMA -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="raw_gma" checked class="rounded">
+          <span class="text-sm">Gamma brut</span>
+        </label>
+      </div>
+
+      <!-- Lens Correction -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="lenc" checked class="rounded">
+          <span class="text-sm">Correction lentille</span>
+        </label>
+      </div>
+
+      <!-- DCW -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="dcw" checked class="rounded">
+          <span class="text-sm">Réduction taille</span>
+        </label>
+      </div>
+
+      <!-- Color Bar -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="colorbar" class="rounded">
+          <span class="text-sm">Barre de couleur (test)</span>
+        </label>
+      </div>
+
+      <!-- Mirror -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="hmirror" class="rounded">
+          <span class="text-sm">Miroir horizontal</span>
+        </label>
+      </div>
+
+      <!-- Flip -->
+      <div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="vflip" class="rounded">
+          <span class="text-sm">Retournement vertical</span>
+        </label>
+      </div>
+
+      <!-- LED Intensity (if available) -->
+      <div>
+        <label class="text-sm font-medium block mb-2">Intensité LED</label>
+        <input type="range" id="led_intensity" min="0" max="255" value="0" class="w-full">
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex gap-2 pt-4">
+        <button onclick="capturePhoto()" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-red-600 transition-colors">
+          <span class="material-symbols-outlined text-sm">photo_camera</span>
+          Capturer
+        </button>
+        <button onclick="resetSettings()" class="flex-1 px-4 py-2 bg-slate-200 dark:bg-zinc-700 rounded-lg hover:bg-slate-300 dark:hover:bg-zinc-600 transition-colors">
+          Réinitialiser
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const CAMERA_URL = 'http://192.168.100.55:5000'; // Serveur Flask
+let currentCam = null;
+
+// Initialize stream
+function initStream() {
+  const streamImg = document.getElementById('stream');
+  streamImg.src = `${CAMERA_URL}/stream?${Date.now()}`;
+  
+  streamImg.onerror = () => {
+    console.error('Erreur de chargement du stream');
+    streamImg.alt = 'Erreur: Impossible de se connecter à la caméra';
+    // Retry après 3 secondes
+    setTimeout(() => {
+      streamImg.src = `${CAMERA_URL}/stream?${Date.now()}`;
+    }, 3000);
+  };
+  
+  streamImg.onload = () => {
+    console.log('Stream connecté avec succès');
+  };
+  
+  updateTime();
+  setInterval(updateTime, 1000);
+  
+  console.log('Stream initialisé depuis:', CAMERA_URL);
+}
+
+// Update time display
+function updateTime() {
+  const now = new Date();
+  const time = now.toLocaleTimeString('fr-FR');
+  document.getElementById('time-cam-01').textContent = time;
+}
+
+// Toggle dark mode
+function toggleDark() {
+  document.documentElement.classList.toggle("dark");
+}
+
+// Toggle settings modal
+function toggleSettings(camId) {
+  currentCam = camId;
+  document.getElementById('modal-cam-name').textContent = camId.toUpperCase();
+  document.getElementById('settings-modal').classList.remove('hidden');
+}
+
+function closeSettings(event) {
+  if (!event || event.target.id === 'settings-modal') {
+    document.getElementById('settings-modal').classList.add('hidden');
+  }
+}
+
+// Send command to camera
+function sendCommand(variable, value) {
+  fetch(`${CAMERA_URL}/control?var=${variable}&val=${value}`)
+    .then(response => response.text())
+    .catch(err => console.error('Error:', err));
+}
+
+// Load current settings
+function loadSettings() {
+  fetch(`${CAMERA_URL}/status`)
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('framesize').value = data.framesize || 6;
+      document.getElementById('quality').value = data.quality || 10;
+      document.getElementById('brightness').value = data.brightness || 0;
+      document.getElementById('contrast').value = data.contrast || 0;
+      document.getElementById('saturation').value = data.saturation || 0;
+      document.getElementById('special_effect').value = data.special_effect || 0;
+      document.getElementById('awb').checked = data.awb === 1;
+      document.getElementById('agc').checked = data.agc === 1;
+      document.getElementById('aec').checked = data.aec === 1;
+      document.getElementById('hmirror').checked = data.hmirror === 1;
+      document.getElementById('vflip').checked = data.vflip === 1;
+      document.getElementById('led_intensity').value = data.led_intensity || 0;
+    })
+    .catch(err => console.error('Error loading settings:', err));
+}
+
+// Reset settings to default
+function resetSettings() {
+  const defaults = {
+    framesize: 6,
+    quality: 10,
+    brightness: 0,
+    contrast: 0,
+    saturation: 0,
+    sharpness: 0,
+    denoise: 0,
+    special_effect: 0,
+    awb: 1,
+    awb_gain: 1,
+    wb_mode: 0,
+    agc: 1,
+    agc_gain: 0,
+    gainceiling: 6,
+    aec: 1,
+    aec2: 1,
+    ae_level: 0,
+    aec_value: 204,
+    hmirror: 0,
+    vflip: 0,
+    bpc: 0,
+    wpc: 1,
+    raw_gma: 1,
+    lenc: 1,
+    dcw: 1,
+    colorbar: 0,
+    led_intensity: 0
+  };
+  
+  Object.keys(defaults).forEach(key => {
+    sendCommand(key, defaults[key]);
+  });
+  
+  setTimeout(loadSettings, 500);
+}
+
+// Capture photo
+function capturePhoto() {
+  window.open(`${CAMERA_URL}/capture`, '_blank');
+}
+
+// Event listeners for settings
+document.addEventListener('DOMContentLoaded', () => {
+  initStream();
+  
+  // Add change listeners
+  document.getElementById('framesize').addEventListener('change', (e) => sendCommand('framesize', e.target.value));
+  document.getElementById('quality').addEventListener('change', (e) => sendCommand('quality', e.target.value));
+  document.getElementById('brightness').addEventListener('change', (e) => sendCommand('brightness', e.target.value));
+  document.getElementById('contrast').addEventListener('change', (e) => sendCommand('contrast', e.target.value));
+  document.getElementById('saturation').addEventListener('change', (e) => sendCommand('saturation', e.target.value));
+  document.getElementById('special_effect').addEventListener('change', (e) => sendCommand('special_effect', e.target.value));
+  document.getElementById('awb').addEventListener('change', (e) => sendCommand('awb', e.target.checked ? 1 : 0));
+  document.getElementById('agc').addEventListener('change', (e) => sendCommand('agc', e.target.checked ? 1 : 0));
+  document.getElementById('aec').addEventListener('change', (e) => sendCommand('aec', e.target.checked ? 1 : 0));
+  document.getElementById('hmirror').addEventListener('change', (e) => sendCommand('hmirror', e.target.checked ? 1 : 0));
+  document.getElementById('vflip').addEventListener('change', (e) => sendCommand('vflip', e.target.checked ? 1 : 0));
+  document.getElementById('led_intensity').addEventListener('change', (e) => sendCommand('led_intensity', e.target.value));
+  
+  // Nouveaux paramètres
+  document.getElementById('sharpness').addEventListener('change', (e) => sendCommand('sharpness', e.target.value));
+  document.getElementById('denoise').addEventListener('change', (e) => sendCommand('denoise', e.target.value));
+  document.getElementById('ae_level').addEventListener('change', (e) => sendCommand('ae_level', e.target.value));
+  document.getElementById('aec_value').addEventListener('change', (e) => sendCommand('aec_value', e.target.value));
+  document.getElementById('agc_gain').addEventListener('change', (e) => sendCommand('agc_gain', e.target.value));
+  document.getElementById('gainceiling').addEventListener('change', (e) => sendCommand('gainceiling', e.target.value));
+  document.getElementById('wb_mode').addEventListener('change', (e) => sendCommand('wb_mode', e.target.value));
+  document.getElementById('aec2').addEventListener('change', (e) => sendCommand('aec2', e.target.checked ? 1 : 0));
+  document.getElementById('awb_gain').addEventListener('change', (e) => sendCommand('awb_gain', e.target.checked ? 1 : 0));
+  document.getElementById('bpc').addEventListener('change', (e) => sendCommand('bpc', e.target.checked ? 1 : 0));
+  document.getElementById('wpc').addEventListener('change', (e) => sendCommand('wpc', e.target.checked ? 1 : 0));
+  document.getElementById('raw_gma').addEventListener('change', (e) => sendCommand('raw_gma', e.target.checked ? 1 : 0));
+  document.getElementById('lenc').addEventListener('change', (e) => sendCommand('lenc', e.target.checked ? 1 : 0));
+  document.getElementById('dcw').addEventListener('change', (e) => sendCommand('dcw', e.target.checked ? 1 : 0));
+  document.getElementById('colorbar').addEventListener('change', (e) => sendCommand('colorbar', e.target.checked ? 1 : 0));
+});
+</script>
+
+</body>
+</html>
